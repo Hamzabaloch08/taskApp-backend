@@ -79,9 +79,13 @@ export const login = async (req, res) => {
         { expiresIn: "62h" }
       );
 
+      const isProduction =
+        process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
+
       res.cookie("token", token, {
         httpOnly: true,
-        secure: true,
+        secure: isProduction,
+        sameSite: "strict",
       });
 
       return res.status(200).json(successResponse("Login successful"));
@@ -96,11 +100,15 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
+    const isProduction =
+      process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
+      
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Only secure in production
+      secure: isProduction,
       sameSite: "strict",
     });
+
     return res.status(200).json(successResponse("Logged out successfully"));
   } catch (err) {
     console.error("logout error:", err);
