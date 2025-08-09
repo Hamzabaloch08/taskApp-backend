@@ -6,7 +6,6 @@ import jwt from "jsonwebtoken";
 import express from "express";
 import dotenv from "dotenv";
 
-const PORT = process.env.PORT || 4000;
 const app = express();
 dotenv.config();
 
@@ -16,10 +15,17 @@ app.use(cookieParser());
 app.use("/api/v1", authRoutes);
 
 app.use((req, res, next) => {
+  const publicPaths = ["/signup", "/login", "/logout"];
+
+  if (publicPaths.includes(req.path)) {
+    return next();
+  }
+
   const token = req.cookies.token;
   if (!token) {
     return res.status(401).json(errorResponse("No token provided"));
   }
+
   try {
     const decoded = jwt.verify(token, process.env.SECRET);
     req.user = {
@@ -34,9 +40,17 @@ app.use((req, res, next) => {
   }
 });
 
+
 app.use("/api/v1", todoRoutes);
 
 
-app.listen(PORT, () => {
-  console.log(`example server listining on PORT ${PORT}`);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    const port = process.env.PORT || 4000;
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
+}
+
+// Export for Vercel
+export default app;
