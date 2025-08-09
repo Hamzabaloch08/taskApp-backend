@@ -1,5 +1,6 @@
 import { successResponse, errorResponse } from "../utils/responses.mjs";
 import { client } from "../config/db.mjs";
+import validator from "validator";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
@@ -10,6 +11,10 @@ export const signUp = async (req, res) => {
 
   if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !password) {
     return res.status(400).json(errorResponse("Required parameter(s) missing"));
+  }
+
+  if (!validator.isEmail(email)) {
+    return res.status(400).json(errorResponse("Invalid email format"));
   }
 
   try {
@@ -25,19 +30,19 @@ export const signUp = async (req, res) => {
 
     if (existingUser) {
       return res.status(409).json(errorResponse("Email already registered"));
-    } else {
-      const insertResponse = await userCollection.insertOne({
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: normalizedEmail,
-        password: hashedPassword,
-        createdOn: new Date(),
-      });
-
-      console.log("response", insertResponse);
-
-      res.status(201).json(successResponse("User created"));
     }
+
+    const insertResponse = await userCollection.insertOne({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: normalizedEmail,
+      password: hashedPassword,
+      createdOn: new Date(),
+    });
+
+    console.log("User created:", insertResponse.insertedId);
+
+    return res.status(201).json(successResponse("User created"));
   } catch (err) {
     console.error("signUp error:", err);
     return res.status(500).json(errorResponse("Server error"));
