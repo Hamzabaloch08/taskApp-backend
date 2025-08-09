@@ -5,12 +5,20 @@ import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 
+const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:3000";
 const app = express();
 dotenv.config();
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+  cors({
+    origin: allowedOrigin,
+    credentials: true,
+  })
+);
 
 app.use("/api/v1", authRoutes);
 
@@ -40,16 +48,14 @@ app.use((req, res, next) => {
   }
 });
 
-
 app.use("/api/v1", todoRoutes);
 
-
 // For local development
-if (process.env.NODE_ENV !== 'production') {
-    const port = process.env.PORT || 4000;
-    app.listen(port, () => {
-        console.log(`Server is running on port ${port}`);
-    });
+if (process.env.NODE_ENV !== "production") {
+  const port = process.env.PORT || 4000;
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
 }
 
 // Export for Vercel
