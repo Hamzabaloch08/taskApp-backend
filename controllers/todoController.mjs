@@ -17,6 +17,7 @@ export const createTodo = async (req, res) => {
     const insertTask = await todoCollection.insertOne({
       title,
       email: req.user.email,
+      createdOn: new Date(),
     });
 
     res
