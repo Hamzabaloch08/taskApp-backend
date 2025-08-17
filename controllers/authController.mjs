@@ -4,7 +4,7 @@ import validator from "validator";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-const userCollection = client.db("todoDB").collection("users");
+const userCollection = client.db("taskDB").collection("users");
 
 export const signUp = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;

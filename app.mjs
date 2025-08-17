@@ -1,5 +1,5 @@
 import { errorResponse } from "./utils/responses.mjs";
-import { todoRoutes } from "./routes/todoRoutes.mjs";
+import { taskRoutes } from "./routes/taskRoutes.mjs";
 import { authRoutes } from "./routes/authRoutes.mjs";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
@@ -48,7 +48,7 @@ app.use((req, res, next) => {
   }
 });
 
-app.use("/api/v1", todoRoutes);
+app.use("/api/v1", taskRoutes);
 
 // For local development
 if (process.env.NODE_ENV !== "production") {
