@@ -9,26 +9,39 @@ export const createTask = async (req, res) => {
   const { title, description } = req.body;
 
   if (
-    !title || typeof title !== "string" || title.trim() === "" ||
-    !description || typeof description !== "string" || description.trim() === ""
+    !title ||
+    typeof title !== "string" ||
+    title.trim() === "" ||
+    !description ||
+    typeof description !== "string" ||
+    description.trim() === ""
   ) {
-    return res.status(400).json(
-      errorResponse("Title and description are required and must be non-empty strings")
-    );
+    return res
+      .status(400)
+      .json(
+        errorResponse(
+          "Title and description are required and must be non-empty strings"
+        )
+      );
   }
 
   try {
     const insertTask = await taskCollection.insertOne({
       title: title.trim(),
       description: description.trim(),
-      completed: false,
       email: req.user.email,
+      completed: false,
+      important: false,
       createdOn: new Date(),
     });
 
-    res.status(201).json(successResponse("Task created successfully", insertTask));
+    res
+      .status(201)
+      .json(successResponse("Task created successfully", insertTask));
   } catch (err) {
-    res.status(500).json(errorResponse("Something went wrong while creating task"));
+    res
+      .status(500)
+      .json(errorResponse("Something went wrong while creating task"));
   }
 };
 
@@ -57,12 +70,20 @@ export const updateTask = async (req, res) => {
   }
 
   if (
-    !title || typeof title !== "string" || title.trim() === "" ||
-    !description || typeof description !== "string" || description.trim() === ""
+    !title ||
+    typeof title !== "string" ||
+    title.trim() === "" ||
+    !description ||
+    typeof description !== "string" ||
+    description.trim() === ""
   ) {
-    return res.status(400).json(
-      errorResponse("Title and description are required and must be non-empty strings")
-    );
+    return res
+      .status(400)
+      .json(
+        errorResponse(
+          "Title and description are required and must be non-empty strings"
+        )
+      );
   }
 
   try {
