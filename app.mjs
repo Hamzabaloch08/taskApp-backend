@@ -22,31 +22,31 @@ app.use(
 
 app.use("/api/v1", authRoutes);
 
-app.use((req, res, next) => {
-  const publicPaths = ["/signup", "/login", "/logout"];
+// app.use((req, res, next) => {
+//   const publicPaths = ["/signup", "/login", "/logout"];
 
-  if (publicPaths.includes(req.path)) {
-    return next();
-  }
+//   if (publicPaths.includes(req.path)) {
+//     return next();
+//   }
 
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(401).json(errorResponse("No token provided"));
-  }
+//   const token = req.cookies.token;
+//   if (!token) {
+//     return res.status(401).json(errorResponse("No token provided"));
+//   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.SECRET);
-    req.user = {
-      firstName: decoded.firstName,
-      lastName: decoded.lastName,
-      email: decoded.email,
-      isAdmin: decoded.isAdmin,
-    };
-    next();
-  } catch (err) {
-    return res.status(401).json(errorResponse("Invalid token"));
-  }
-});
+//   try {
+//     const decoded = jwt.verify(token, process.env.SECRET);
+//     req.user = {
+//       firstName: decoded.firstName,
+//       lastName: decoded.lastName,
+//       email: decoded.email,
+//       isAdmin: decoded.isAdmin,
+//     };
+//     next();
+//   } catch (err) {
+//     return res.status(401).json(errorResponse("Invalid token"));
+//   }
+// });
 
 app.use("/api/v1", taskRoutes);
 
