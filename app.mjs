@@ -10,16 +10,14 @@ import cors from "cors";
 const app = express();
 dotenv.config();
 
+const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      process.env.FRONTEND_URL, // deploy hone ke baad ye use hoga
-    ],
-    credentials: true,
+    origin: allowedOrigin, // frontend domain
+    credentials: true,     // cookies allow karne ke liye
   })
 );
 
