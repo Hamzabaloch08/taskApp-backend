@@ -75,7 +75,6 @@ export const login = async (req, res) => {
     if (result) {
       const token = jwt.sign(
         {
-          isAdmin: false,
           firstName: existingUser.firstName,
           lastName: existingUser.lastName,
           email: existingUser.email,
