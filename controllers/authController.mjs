@@ -90,7 +90,7 @@ export const login = async (req, res) => {
       res.cookie("token", token, {
         httpOnly: true,
         secure: isProduction,
-        sameSite: "strict",
+        sameSite: "none",
       });
 
       return res.status(200).json(successResponse("Login successful"));
