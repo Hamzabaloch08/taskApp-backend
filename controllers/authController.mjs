@@ -83,14 +83,13 @@ export const login = async (req, res) => {
         process.env.SECRET,
         { expiresIn: "62h" }
       );
-
       const isProduction =
         process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
 
       res.cookie("token", token, {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: "none",
+        secure: isProduction, // true only on Vercel
+        sameSite: isProduction ? "none" : "lax", // local pe lax
       });
 
       return res.status(200).json(successResponse("Login successful"));
@@ -107,7 +106,7 @@ export const logout = async (req, res) => {
   try {
     const isProduction =
       process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
-      
+
     res.clearCookie("token", {
       httpOnly: true,
       secure: isProduction,
@@ -137,6 +136,8 @@ export const check = async (req, res) => {
     );
   } catch (err) {
     console.error("check error:", err);
-    return res.status(500).json(errorResponse("Server error during auth check"));
+    return res
+      .status(500)
+      .json(errorResponse("Server error during auth check"));
   }
 };
