@@ -7,7 +7,6 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 
-const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:3000";
 const app = express();
 dotenv.config();
 
@@ -15,10 +14,15 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      process.env.FRONTEND_URL, // deploy hone ke baad ye use hoga
+    ],
     credentials: true,
   })
 );
+
 
 app.use("/api/v1/auth", authRoutes);
 
