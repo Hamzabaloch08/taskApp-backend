@@ -120,3 +120,23 @@ export const logout = async (req, res) => {
     return res.status(500).json(errorResponse("Server error during logout"));
   }
 };
+
+export const check = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json(errorResponse("Not authenticated"));
+    }
+
+    return res.status(200).json(
+      successResponse("User is authenticated", {
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        email: req.user.email,
+        isAdmin: req.user.isAdmin,
+      })
+    );
+  } catch (err) {
+    console.error("check error:", err);
+    return res.status(500).json(errorResponse("Server error during auth check"));
+  }
+};
