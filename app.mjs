@@ -1,3 +1,4 @@
+import { verifyToken } from "./middleware/authMiddleware.mjs";
 import { errorResponse } from "./utils/responses.mjs";
 import { taskRoutes } from "./routes/taskRoutes.mjs";
 import { authRoutes } from "./routes/authRoutes.mjs";
@@ -26,8 +27,11 @@ app.use(
 
 app.use("/api/v1/auth", authRoutes);
 
+
 app.use((req, res, next) => {
-  const publicPaths = ["/signup", "/login", "/logout"];
+
+const publicPaths = ["/signup", "/login", "/logout"];
+
 
   if (publicPaths.includes(req.path)) {
     return next();
@@ -52,7 +56,8 @@ app.use((req, res, next) => {
   }
 });
 
-app.use("/api/v1", taskRoutes);
+// Private routes (tasks, dashboard, etc.)
+app.use("/api/v1", verifyToken, taskRoutes);
 
 // For local development
 if (process.env.NODE_ENV !== "production") {
