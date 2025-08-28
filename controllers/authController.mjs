@@ -82,14 +82,15 @@ export const login = async (req, res) => {
         process.env.SECRET,
         { expiresIn: "62h" }
       );
-const isProduction = process.env.NODE_ENV === "production";
 
-res.cookie("token", token, {
-  httpOnly: true,
-  secure: isProduction, // false locally
-  sameSite: isProduction ? "none" : "lax",
-});
+      // const isProduction =
+      //   process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
 
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+      });
 
       return res.status(200).json(successResponse("Login successful"));
     } else {
