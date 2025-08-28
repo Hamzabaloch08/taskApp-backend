@@ -29,7 +29,12 @@ app.use("/api/v1/auth", authRoutes);
 // Auth middleware for protected routes
 app.use((req, res, next) => {
   // Paths that do NOT require auth
-  const publicPaths = ["/signup", "/login", "/logout", "/check"];
+  const publicPaths = [
+    "/api/v1/auth/signup",
+    "/api/v1/auth/login",
+    "/api/v1/auth/logout",
+    "/api/v1/auth/check",
+  ];
 
   if (publicPaths.includes(req.path)) {
     return next();
