@@ -1,45 +1,33 @@
-import express from "express";
-import dotenv from "dotenv";
-import cookieParser from "cookie-parser";
-import jwt from "jsonwebtoken";
-import cors from "cors";
-
 import { errorResponse } from "./utils/responses.mjs";
 import { taskRoutes } from "./routes/taskRoutes.mjs";
 import { authRoutes } from "./routes/authRoutes.mjs";
+import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
 
-dotenv.config();
 const app = express();
-
-// Middlewares
-app.use(express.json());
-app.use(cookieParser());
+dotenv.config();
 
 const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+
+app.use(express.json());
+app.use(cookieParser());
 app.use(
   cors({
     origin: allowedOrigin,
-    credentials: true,
+    credentials: true,     
   })
 );
 
-// Auth routes (signup, login, logout, check)
+
 app.use("/api/v1/auth", authRoutes);
 
-
 app.use((req, res, next) => {
-  // Paths that do NOT require auth
-  const publicPaths = [
-    "/api/v1/auth/signup",
-    "/api/v1/auth/login",
-    "/api/v1/auth/logout",
-    "/api/v1/auth/check",
-  ];
+  const publicPaths = ["/signup", "/login", "/logout","/check"];
 
-  if (
-    req.path.startsWith("/api/v1/auth") &&
-    publicPaths.some((p) => req.path.endsWith(p))
-  ) {
+  if (publicPaths.includes(req.path)) {
     return next();
   }
 
@@ -62,15 +50,15 @@ app.use((req, res, next) => {
   }
 });
 
-// Task routes (protected)
-app.use("/api/v1/tasks", taskRoutes);
+app.use("/api/v1", taskRoutes);
 
-// Server start (local)
+// For local development
 if (process.env.NODE_ENV !== "production") {
   const port = process.env.PORT || 4000;
   app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+    console.log(`Server is running on port ${port}`);
   });
 }
 
+// Export for Vercel
 export default app;

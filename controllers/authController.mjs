@@ -82,16 +82,13 @@ export const login = async (req, res) => {
         process.env.SECRET,
         { expiresIn: "62h" }
       );
-
       const isProduction =
         process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
 
       res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        maxAge: 62 * 60 * 60 * 1000,
-        path: "/", // make sure this is /
+        secure: isProduction, // true only on Vercel
+        sameSite: isProduction ? "none" : "lax", // local lax
       });
 
       return res.status(200).json(successResponse("Login successful"));
@@ -106,13 +103,13 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    const isProduction = process.env.NODE_ENV === "production";
+    const isProduction =
+      process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
 
     res.clearCookie("token", {
       httpOnly: true,
-      secure: isProduction, // local pe false, deploy pe true
-      sameSite: isProduction ? "none" : "lax", // local pe lax, deploy pe none
-      path: "/", // important: cookie path specify karna
+      secure: isProduction,
+      sameSite: "strict",
     });
 
     return res.status(200).json(successResponse("Logged out successfully"));
