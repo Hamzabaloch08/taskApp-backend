@@ -111,7 +111,7 @@ export const logout = async (req, res) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: isProduction, // local pe false, deploy pe true
-      sameSite: isProduction ? "none" : "lax", // local pe lax, deploy pe none
+      sameSite: isProduction ? "lax" : "node", // local pe lax, deploy pe none
       path: "/", // important: cookie path specify karna
     });
 
