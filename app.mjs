@@ -23,15 +23,10 @@ app.use(
   })
 );
 
-
-
 app.use("/api/v1/auth", authRoutes);
 
-
 app.use((req, res, next) => {
-
-const publicPaths = ["/signup", "/login", "/logout"];
-
+  const publicPaths = ["/signup", "/login", "/logout"];
 
   if (publicPaths.includes(req.path)) {
     return next();
@@ -57,7 +52,8 @@ const publicPaths = ["/signup", "/login", "/logout"];
 });
 
 // Private routes (tasks, dashboard, etc.)
-app.use("/api/v1", verifyToken, taskRoutes);
+app.use(verifyToken);
+app.use("/api/v1", taskRoutes);
 
 // For local development
 if (process.env.NODE_ENV !== "production") {
