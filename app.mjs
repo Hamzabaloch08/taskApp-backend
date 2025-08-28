@@ -1,21 +1,21 @@
-import { verifyToken } from "./middleware/authMiddleware.mjs";
+import express from "express";
+import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
+import cors from "cors";
+
 import { errorResponse } from "./utils/responses.mjs";
 import { taskRoutes } from "./routes/taskRoutes.mjs";
 import { authRoutes } from "./routes/authRoutes.mjs";
-import cookieParser from "cookie-parser";
-import jwt from "jsonwebtoken";
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
 
-const app = express();
 dotenv.config();
+const app = express();
 
+// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 
 const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
-
 app.use(
   cors({
     origin: allowedOrigin,
@@ -23,10 +23,13 @@ app.use(
   })
 );
 
+// Auth routes (signup, login, logout, check)
 app.use("/api/v1/auth", authRoutes);
 
+// Auth middleware for protected routes
 app.use((req, res, next) => {
-  const publicPaths = ["/signup", "/login", "/logout"];
+  // Paths that do NOT require auth
+  const publicPaths = ["/signup", "/login", "/logout", "/check"];
 
   if (publicPaths.includes(req.path)) {
     return next();
@@ -51,17 +54,15 @@ app.use((req, res, next) => {
   }
 });
 
-// Private routes (tasks, dashboard, etc.)
-app.use(verifyToken);
-app.use("/api/v1", taskRoutes);
+// Task routes (protected)
+app.use("/api/v1/tasks", taskRoutes);
 
-// For local development
+// Server start (local)
 if (process.env.NODE_ENV !== "production") {
   const port = process.env.PORT || 4000;
   app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`Server running on port ${port}`);
   });
 }
 
-// Export for Vercel
 export default app;
