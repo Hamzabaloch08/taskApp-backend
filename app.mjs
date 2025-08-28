@@ -26,7 +26,7 @@ app.use(
 // Auth routes (signup, login, logout, check)
 app.use("/api/v1/auth", authRoutes);
 
-// Auth middleware for protected routes
+
 app.use((req, res, next) => {
   // Paths that do NOT require auth
   const publicPaths = [
@@ -36,7 +36,10 @@ app.use((req, res, next) => {
     "/api/v1/auth/check",
   ];
 
-  if (publicPaths.includes(req.path)) {
+  if (
+    req.path.startsWith("/api/v1/auth") &&
+    publicPaths.some((p) => req.path.endsWith(p))
+  ) {
     return next();
   }
 
