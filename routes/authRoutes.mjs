@@ -1,14 +1,11 @@
 import express from "express";
-import {
-  signUp,
-  login,
-  logout,
-  check
-} from "../controllers/authController.mjs";
+import { signUp, login, logout, check } from "../controllers/authController.mjs";
 
-export const authRoutes = express.Router();
+const router = express.Router();
 
-authRoutes.post("/signup", signUp);
-authRoutes.post("/login", login);
-authRoutes.post("/logout", logout);
-authRoutes.get("/check", check);
+router.post("/signup", signUp);
+router.post("/login", login);
+router.post("/logout", logout);
+router.get("/check", check);
+
+export { router as authRoutes };

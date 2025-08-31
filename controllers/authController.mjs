@@ -1,9 +1,9 @@
+// controllers/authController.mjs
 import { successResponse, errorResponse } from "../utils/responses.mjs";
 import { client } from "../config/db.mjs";
 import validator from "validator";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { MaxKey } from "mongodb";
 
 const userCollection = client.db("taskDB").collection("users");
 
@@ -19,19 +19,14 @@ export const signUp = async (req, res) => {
   }
 
   try {
-    const saltRounds = 10;
-    const salt = await bcrypt.genSalt(saltRounds);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
     const normalizedEmail = email.toLowerCase().trim();
-
-    const existingUser = await userCollection.findOne({
-      email: normalizedEmail,
-    });
+    const existingUser = await userCollection.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return res.status(409).json(errorResponse("Email already registered"));
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const insertResponse = await userCollection.insertOne({
       firstName: firstName.trim(),
@@ -60,44 +55,41 @@ export const login = async (req, res) => {
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    const existingUser = await userCollection.findOne({
-      email: normalizedEmail,
-    });
+    const existingUser = await userCollection.findOne({ email: normalizedEmail });
 
     if (!existingUser) {
-      return res
-        .status(404)
-        .json(errorResponse("Email or password is incorrect"));
+      return res.status(404).json(errorResponse("Email or password is incorrect"));
     }
 
-    // Compare password with hashed password
-    const result = await bcrypt.compare(password, existingUser.password);
+    const passwordMatch = await bcrypt.compare(password, existingUser.password);
 
-    if (result) {
-      const token = jwt.sign(
-        {
-          firstName: existingUser.firstName,
-          lastName: existingUser.lastName,
-          email: existingUser.email,
-          isAdmin: existingUser.isAdmin,
-          MaxAge: 800000
-        },
-        process.env.SECRET,
-        { expiresIn: "62h" }
-      );
-      // const isProduction =
-      //   process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
-
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: false, // local dev
-        sameSite: "lax",
-      });
-
-      return res.status(200).json(successResponse("Login successful"));
-    } else {
+    if (!passwordMatch) {
       return res.status(401).json(errorResponse("Invalid credentials"));
     }
+
+    const token = jwt.sign(
+      {
+        firstName: existingUser.firstName,
+        lastName: existingUser.lastName,
+        email: existingUser.email,
+        isAdmin: existingUser.isAdmin,
+      },
+      process.env.SECRET,
+      { expiresIn: "62h" }
+    );
+
+    const isProduction =
+      process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 62 * 60 * 60 * 1000, // 62 hours
+      path: "/",
+    });
+
+    return res.status(200).json(successResponse("Login successful"));
   } catch (err) {
     console.error("login error:", err);
     res.status(500).json(errorResponse("Server error"));
@@ -112,7 +104,8 @@ export const logout = async (req, res) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: isProduction,
-      sameSite: "strict",
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
     });
 
     return res.status(200).json(successResponse("Logged out successfully"));
@@ -124,23 +117,20 @@ export const logout = async (req, res) => {
 
 export const check = async (req, res) => {
   try {
-    console.log(req);
     if (!req?.user) {
       return res.status(401).json(errorResponse("Not authenticated"));
     }
 
     return res.status(200).json(
       successResponse("User is authenticated", {
-        firstName: req?.user?.firstName,
-        lastName: req?.user?.lastName,
-        email: req?.user?.email,
-        isAdmin: req?.user?.isAdmin,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        email: req.user.email,
+        isAdmin: req.user.isAdmin,
       })
     );
   } catch (err) {
     console.error("check error:", err);
-    return res
-      .status(500)
-      .json(errorResponse("Server error during auth check"));
+    return res.status(500).json(errorResponse("Server error during auth check"));
   }
 };
