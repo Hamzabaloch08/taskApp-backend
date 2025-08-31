@@ -3,6 +3,7 @@ import { client } from "../config/db.mjs";
 import validator from "validator";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { MaxKey } from "mongodb";
 
 const userCollection = client.db("taskDB").collection("users");
 
@@ -78,17 +79,19 @@ export const login = async (req, res) => {
           firstName: existingUser.firstName,
           lastName: existingUser.lastName,
           email: existingUser.email,
+          isAdmin: existingUser.isAdmin,
+          MaxAge: 800000
         },
         process.env.SECRET,
         { expiresIn: "62h" }
       );
-      const isProduction =
-        process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
+      // const isProduction =
+      //   process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
 
       res.cookie("token", token, {
         httpOnly: true,
-        secure: isProduction, // true only on Vercel
-        sameSite: isProduction ? "none" : "lax", // local lax
+        secure: false, // local dev
+        sameSite: "lax",
       });
 
       return res.status(200).json(successResponse("Login successful"));
@@ -121,16 +124,17 @@ export const logout = async (req, res) => {
 
 export const check = async (req, res) => {
   try {
-    if (!req.user) {
+    console.log(req);
+    if (!req?.user) {
       return res.status(401).json(errorResponse("Not authenticated"));
     }
 
     return res.status(200).json(
       successResponse("User is authenticated", {
-        firstName: req.user.firstName,
-        lastName: req.user.lastName,
-        email: req.user.email,
-        isAdmin: req.user.isAdmin,
+        firstName: req?.user?.firstName,
+        lastName: req?.user?.lastName,
+        email: req?.user?.email,
+        isAdmin: req?.user?.isAdmin,
       })
     );
   } catch (err) {

@@ -25,8 +25,10 @@ app.use(
 app.use("/api/v1/auth", authRoutes);
 
 app.use((req, res, next) => {
-  const publicPaths = ["/signup", "/login", "/logout","/check"];
+  console.log(req.cookies,"====cookies" );
+  console.log(req.cookies.token,"====token" );
 
+  const publicPaths = ["/auth/signup", "/auth/login", "/auth/logout"];
   if (publicPaths.includes(req.path)) {
     return next();
   }
@@ -38,17 +40,14 @@ app.use((req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.SECRET);
-    req.user = {
-      firstName: decoded.firstName,
-      lastName: decoded.lastName,
-      email: decoded.email,
-      isAdmin: decoded.isAdmin,
-    };
+    console.log("decoded:", decoded);
+    req.user = decoded;
     next();
   } catch (err) {
     return res.status(401).json(errorResponse("Invalid token"));
   }
 });
+
 
 app.use("/api/v1", taskRoutes);
 
