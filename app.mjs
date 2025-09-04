@@ -1,4 +1,4 @@
-// server.mjs
+
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -23,7 +23,6 @@ app.use(
     credentials: true, // important for sending cookies cross-origin
   })
 );
-app.use("/api/v1/auth", authRoutes);
 
 // Auth middleware
 app.use((req, res, next) => {
@@ -43,6 +42,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1", taskRoutes);
 
 // Dev server
