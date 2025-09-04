@@ -1,46 +1,29 @@
-import { successResponse, errorResponse } from "../utils/responses.mjs";
-import { client } from "../config/db.mjs";
-import validator from "validator";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import validator from "validator";
+import { client } from "../config/db.mjs";
+import { successResponse, errorResponse } from "../utils/responses.mjs";
 
 const userCollection = client.db("taskDB").collection("users");
 
-// 🔐 Helper for cookie options
+// Cookie options helper
 const getCookieOptions = (req) => {
-  const isLocalhost =
-    req.hostname === "localhost" || req.hostname === "127.0.0.1";
+  const isLocal = req.hostname === "localhost" || req.hostname === "127.0.0.1";
 
-  const isProduction =
-    process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
-
-  if (isLocalhost) {
-    // Local frontend + backend (http://localhost)
+  if (isLocal) {
     return {
       httpOnly: true,
-      secure: false, // ❌ not https in local
-      sameSite: "lax", // ✅ lax works with http
+      secure: false,
+      sameSite: "lax",
       path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
   }
 
-  if (isProduction) {
-    // Deployed (vercel + frontend also on https://...)
-    return {
-      httpOnly: true,
-      secure: true, // ✅ must be true for https
-      sameSite: "none", // ✅ allows cross-site cookies
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    };
-  }
-
-  // fallback
   return {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
@@ -50,38 +33,36 @@ const getCookieOptions = (req) => {
 export const signUp = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
-  if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !password) {
-    return res.status(400).json(errorResponse("Required parameter(s) missing"));
+  if (!firstName || !lastName || !email || !password) {
+    return res.status(400).json(errorResponse("All fields required"));
   }
 
   if (!validator.isEmail(email)) {
-    return res.status(400).json(errorResponse("Invalid email format"));
+    return res.status(400).json(errorResponse("Invalid email"));
   }
 
   try {
     const normalizedEmail = email.toLowerCase().trim();
-    const existingUser = await userCollection.findOne({
-      email: normalizedEmail,
-    });
+    const existing = await userCollection.findOne({ email: normalizedEmail });
 
-    if (existingUser) {
+    if (existing) {
       return res.status(409).json(errorResponse("Email already registered"));
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
     await userCollection.insertOne({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      firstName,
+      lastName,
       email: normalizedEmail,
-      password: hashedPassword,
+      password: hashed,
       createdOn: new Date(),
     });
 
     return res.status(201).json(successResponse("User created"));
   } catch (err) {
     console.error("signUp error:", err);
-    return res.status(500).json(errorResponse("Server error"));
+    res.status(500).json(errorResponse("Server error"));
   }
 };
 
@@ -89,38 +70,31 @@ export const signUp = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email?.trim() || !password) {
-    return res.status(400).json(errorResponse("Required parameter(s) missing"));
+  if (!email || !password) {
+    return res.status(400).json(errorResponse("Email and password required"));
   }
 
-  const normalizedEmail = email.toLowerCase().trim();
-
   try {
-    const existingUser = await userCollection.findOne({
-      email: normalizedEmail,
-    });
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await userCollection.findOne({ email: normalizedEmail });
 
-    if (!existingUser) {
-      return res
-        .status(404)
-        .json(errorResponse("Email or password is incorrect"));
+    if (!user) {
+      return res.status(404).json(errorResponse("Invalid email or password"));
     }
 
-    const passwordMatch = await bcrypt.compare(password, existingUser.password);
-
-    if (!passwordMatch) {
-      return res.status(401).json(errorResponse("Invalid credentials"));
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json(errorResponse("Invalid email or password"));
     }
 
     const token = jwt.sign(
       {
-        firstName: existingUser.firstName,
-        lastName: existingUser.lastName,
-        email: existingUser.email,
-        isAdmin: existingUser.isAdmin || false,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
       },
       process.env.SECRET,
-      { expiresIn: "62h" }
+      { expiresIn: "7d" }
     );
 
     res.cookie("token", token, getCookieOptions(req));
@@ -139,29 +113,26 @@ export const logout = async (req, res) => {
     return res.status(200).json(successResponse("Logged out successfully"));
   } catch (err) {
     console.error("logout error:", err);
-    return res.status(500).json(errorResponse("Server error during logout"));
+    res.status(500).json(errorResponse("Logout failed"));
   }
 };
 
-// ✅ Auth Check
+// ✅ Check
 export const check = async (req, res) => {
   try {
-    if (!req?.user) {
+    if (!req.user) {
       return res.status(401).json(errorResponse("Not authenticated"));
     }
 
     return res.status(200).json(
-      successResponse("User is authenticated", {
+      successResponse("Authenticated", {
         firstName: req.user.firstName,
         lastName: req.user.lastName,
         email: req.user.email,
-        isAdmin: req.user.isAdmin,
       })
     );
   } catch (err) {
     console.error("check error:", err);
-    return res
-      .status(500)
-      .json(errorResponse("Server error during auth check"));
+    res.status(500).json(errorResponse("Auth check failed"));
   }
 };
