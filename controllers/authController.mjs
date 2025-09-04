@@ -1,4 +1,3 @@
-
 import { successResponse, errorResponse } from "../utils/responses.mjs";
 import { client } from "../config/db.mjs";
 import validator from "validator";
@@ -20,7 +19,9 @@ export const signUp = async (req, res) => {
 
   try {
     const normalizedEmail = email.toLowerCase().trim();
-    const existingUser = await userCollection.findOne({ email: normalizedEmail });
+    const existingUser = await userCollection.findOne({
+      email: normalizedEmail,
+    });
 
     if (existingUser) {
       return res.status(409).json(errorResponse("Email already registered"));
@@ -55,10 +56,14 @@ export const login = async (req, res) => {
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    const existingUser = await userCollection.findOne({ email: normalizedEmail });
+    const existingUser = await userCollection.findOne({
+      email: normalizedEmail,
+    });
 
     if (!existingUser) {
-      return res.status(404).json(errorResponse("Email or password is incorrect"));
+      return res
+        .status(404)
+        .json(errorResponse("Email or password is incorrect"));
     }
 
     const passwordMatch = await bcrypt.compare(password, existingUser.password);
@@ -78,14 +83,19 @@ export const login = async (req, res) => {
       { expiresIn: "62h" }
     );
 
+    const isLocalhost =
+      req.hostname === "localhost" || req.hostname === "127.0.0.1";
+
     const isProduction =
-      process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
+      process.env.NODE_ENV === "production" &&
+      process.env.VERCEL === "1" &&
+      !isLocalhost;
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: isProduction,
+      secure: isProduction, // localhost -> false, deployed -> true
       sameSite: isProduction ? "none" : "lax",
-      maxAge: 62 * 60 * 60 * 1000, // 62 hours
+      maxAge: 62 * 60 * 60 * 1000,
       path: "/",
     });
 
@@ -98,12 +108,17 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
+    const isLocalhost =
+      req.hostname === "localhost" || req.hostname === "127.0.0.1";
+
     const isProduction =
-      process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
+      process.env.NODE_ENV === "production" &&
+      process.env.VERCEL === "1" &&
+      !isLocalhost;
 
     res.clearCookie("token", {
       httpOnly: true,
-      secure: isProduction,
+      secure: isProduction, // localhost -> false, deployed -> true
       sameSite: isProduction ? "none" : "lax",
       path: "/",
     });
@@ -131,6 +146,8 @@ export const check = async (req, res) => {
     );
   } catch (err) {
     console.error("check error:", err);
-    return res.status(500).json(errorResponse("Server error during auth check"));
+    return res
+      .status(500)
+      .json(errorResponse("Server error during auth check"));
   }
 };
