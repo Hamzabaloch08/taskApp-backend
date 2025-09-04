@@ -1,32 +1,50 @@
-
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 
-import { taskRoutes } from "./routes/taskRoutes.mjs";
 import { authRoutes } from "./routes/authRoutes.mjs";
+import { taskRoutes } from "./routes/taskRoutes.mjs";
 import { errorResponse } from "./utils/responses.mjs";
 
 dotenv.config();
 const app = express();
 
-const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+// Allowed origins
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://fullstack-task-app-three.vercel.app",
+];
 
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+
+// CORS Middleware
 app.use(
   cors({
-    origin: allowedOrigin,
-    credentials: true, // important for sending cookies cross-origin
+    origin: function (origin, callback) {
+      // allow requests with no origin like Postman
+      if (!origin) return callback(null, true);
+      if (!allowedOrigins.includes(origin)) {
+        return callback(new Error("CORS policy: This origin is not allowed"), false);
+      }
+      return callback(null, true);
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
   })
 );
 
-// Auth middleware
+// Auth middleware for protected routes
 app.use((req, res, next) => {
-  const publicPaths = ["/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/logout"];
+  const publicPaths = [
+    "/api/v1/auth/signup",
+    "/api/v1/auth/login",
+    "/api/v1/auth/logout",
+  ];
+
   if (publicPaths.includes(req.path)) return next();
 
   const token = req.cookies.token;
@@ -45,9 +63,21 @@ app.use((req, res, next) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1", taskRoutes);
 
-if (process.env.NODE_ENV !== "production") {
-  const port = process.env.PORT || 4000;
-  app.listen(port, () => console.log(`Server is running on port ${port}`));
-}
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json(errorResponse("Route not found"));
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
+  res.status(500).json(errorResponse("Internal server error"));
+});
+
+// Start server
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 export default app;
