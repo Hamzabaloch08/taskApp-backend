@@ -6,33 +6,20 @@ import { successResponse, errorResponse } from "../utils/responses.mjs";
 
 const userCollection = client.db("taskDB").collection("users");
 
-// Cookie options helper
-const getCookieOptions = (req) => {
-  const isLocal = req.hostname === "localhost" || req.hostname === "127.0.0.1";
+// 🔑 Cookie Options
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === "production";
 
-  console.log(isLocal);
-
-  if (isLocal) {
-    return {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    };
-  }
-  if (!isLocal) {
-    return {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    };
-  }
+  return {
+    httpOnly: true,
+    secure: isProduction, 
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
 };
 
-// Signup
+// 📝 Signup
 export const signUp = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
@@ -69,7 +56,7 @@ export const signUp = async (req, res) => {
   }
 };
 
-//  Login
+// 🔐 Login
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -100,7 +87,7 @@ export const login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.cookie("token", token, getCookieOptions(req));
+    res.cookie("token", token, getCookieOptions());
 
     return res.status(200).json(successResponse("Login successful"));
   } catch (err) {
@@ -112,7 +99,7 @@ export const login = async (req, res) => {
 // 🚪 Logout
 export const logout = async (req, res) => {
   try {
-    res.clearCookie("token", getCookieOptions(req));
+    res.clearCookie("token", getCookieOptions());
     return res.status(200).json(successResponse("Logged out successfully"));
   } catch (err) {
     console.error("logout error:", err);
