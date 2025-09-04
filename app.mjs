@@ -1,4 +1,3 @@
-
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -12,22 +11,26 @@ import { errorResponse } from "./utils/responses.mjs";
 dotenv.config();
 const app = express();
 
-const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
-
-// Middleware
-app.use(express.json());
-app.use(cookieParser());
+// Allow both local & deployed frontend
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: ["http://localhost:5173", process.env.FRONTEND_URL],
     credentials: true,
   })
 );
 
+app.use(express.json());
+app.use(cookieParser());
+
 // Auth middleware
 app.use((req, res, next) => {
-  const publicPaths = ["/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/logout"];
-  if (publicPaths.includes(req.path)) return next();
+  const publicPaths = [
+    "/api/v1/auth/signup",
+    "/api/v1/auth/login",
+    "/api/v1/auth/logout",
+  ];
+
+  if (publicPaths.includes(req.originalUrl)) return next();
 
   const token = req.cookies.token;
   if (!token) return res.status(401).json(errorResponse("No token provided"));
