@@ -20,7 +20,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: allowedOrigin,
-    credentials: true, // important for sending cookies cross-origin
+    credentials: true,
   })
 );
 
