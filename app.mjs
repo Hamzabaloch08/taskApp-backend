@@ -1,4 +1,4 @@
-// server.mjs
+
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -20,10 +20,9 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: allowedOrigin,
-    credentials: true, 
+    credentials: true, // important for sending cookies cross-origin
   })
 );
-app.use("/api/v1/auth", authRoutes);
 
 // Auth middleware
 app.use((req, res, next) => {
@@ -43,13 +42,12 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1", taskRoutes);
 
-// Dev server
 if (process.env.NODE_ENV !== "production") {
   const port = process.env.PORT || 4000;
   app.listen(port, () => console.log(`Server is running on port ${port}`));
 }
 
-// Export for Vercel
 export default app;
