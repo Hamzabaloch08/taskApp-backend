@@ -25,12 +25,12 @@ app.use(cookieParser());
 // Auth middleware
 app.use((req, res, next) => {
   const publicPaths = [
-    "/api/v1/auth/signup",
-    "/api/v1/auth/login",
-    "/api/v1/auth/logout",
-  ];
+  "/api/v1/auth/signup",
+  "/api/v1/auth/login",
+  "/api/v1/auth/logout",
+];
 
-  if (publicPaths.includes(req.originalUrl)) return next();
+if (publicPaths.some(path => req.originalUrl.startsWith(path))) return next();
 
   const token = req.cookies.token;
   if (!token) return res.status(401).json(errorResponse("No token provided"));
