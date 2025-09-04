@@ -6,6 +6,24 @@ import bcrypt from "bcrypt";
 
 const userCollection = client.db("taskDB").collection("users");
 
+// 🔐 Helper for cookie options
+const getCookieOptions = (req) => {
+  const isLocalhost =
+    req.hostname === "localhost" || req.hostname === "127.0.0.1";
+
+  const isProduction =
+    process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
+
+  return {
+    httpOnly: true,
+    secure: isProduction && !isLocalhost, // localhost -> false, vercel -> true
+    sameSite: isProduction && !isLocalhost ? "none" : "lax",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  };
+};
+
+// 📝 Signup
 export const signUp = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
@@ -19,9 +37,7 @@ export const signUp = async (req, res) => {
 
   try {
     const normalizedEmail = email.toLowerCase().trim();
-    const existingUser = await userCollection.findOne({
-      email: normalizedEmail,
-    });
+    const existingUser = await userCollection.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return res.status(409).json(errorResponse("Email already registered"));
@@ -29,15 +45,13 @@ export const signUp = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const insertResponse = await userCollection.insertOne({
+    await userCollection.insertOne({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: normalizedEmail,
       password: hashedPassword,
       createdOn: new Date(),
     });
-
-    console.log("User created:", insertResponse.insertedId);
 
     return res.status(201).json(successResponse("User created"));
   } catch (err) {
@@ -46,6 +60,7 @@ export const signUp = async (req, res) => {
   }
 };
 
+// 🔑 Login
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -56,14 +71,10 @@ export const login = async (req, res) => {
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    const existingUser = await userCollection.findOne({
-      email: normalizedEmail,
-    });
+    const existingUser = await userCollection.findOne({ email: normalizedEmail });
 
     if (!existingUser) {
-      return res
-        .status(404)
-        .json(errorResponse("Email or password is incorrect"));
+      return res.status(404).json(errorResponse("Email or password is incorrect"));
     }
 
     const passwordMatch = await bcrypt.compare(password, existingUser.password);
@@ -77,27 +88,13 @@ export const login = async (req, res) => {
         firstName: existingUser.firstName,
         lastName: existingUser.lastName,
         email: existingUser.email,
-        isAdmin: existingUser.isAdmin,
+        isAdmin: existingUser.isAdmin || false,
       },
       process.env.SECRET,
       { expiresIn: "62h" }
     );
 
-    const isLocalhost =
-      req.hostname === "localhost" || req.hostname === "127.0.0.1";
-
-    const isProduction =
-      process.env.NODE_ENV === "production" &&
-      process.env.VERCEL === "1" &&
-      !isLocalhost;
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: isProduction, // localhost -> false, deployed -> true
-      sameSite: isProduction ? "none" : "lax",
-      maxAge: 62 * 60 * 60 * 1000,
-      path: "/",
-    });
+    res.cookie("token", token, getCookieOptions(req));
 
     return res.status(200).json(successResponse("Login successful"));
   } catch (err) {
@@ -106,23 +103,10 @@ export const login = async (req, res) => {
   }
 };
 
+// 🚪 Logout
 export const logout = async (req, res) => {
   try {
-    const isLocalhost =
-      req.hostname === "localhost" || req.hostname === "127.0.0.1";
-
-    const isProduction =
-      process.env.NODE_ENV === "production" &&
-      process.env.VERCEL === "1" &&
-      !isLocalhost;
-
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: isProduction, // localhost -> false, deployed -> true
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    });
-
+    res.clearCookie("token", getCookieOptions(req));
     return res.status(200).json(successResponse("Logged out successfully"));
   } catch (err) {
     console.error("logout error:", err);
@@ -130,6 +114,7 @@ export const logout = async (req, res) => {
   }
 };
 
+// ✅ Auth Check
 export const check = async (req, res) => {
   try {
     if (!req?.user) {
@@ -146,8 +131,6 @@ export const check = async (req, res) => {
     );
   } catch (err) {
     console.error("check error:", err);
-    return res
-      .status(500)
-      .json(errorResponse("Server error during auth check"));
+    return res.status(500).json(errorResponse("Server error during auth check"));
   }
 };
