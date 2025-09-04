@@ -14,12 +14,35 @@ const getCookieOptions = (req) => {
   const isProduction =
     process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
 
+  if (isLocalhost) {
+    // Local frontend + backend (http://localhost)
+    return {
+      httpOnly: true,
+      secure: false, // ❌ not https in local
+      sameSite: "lax", // ✅ lax works with http
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+  }
+
+  if (isProduction) {
+    // Deployed (vercel + frontend also on https://...)
+    return {
+      httpOnly: true,
+      secure: true, // ✅ must be true for https
+      sameSite: "none", // ✅ allows cross-site cookies
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+  }
+
+  // fallback
   return {
     httpOnly: true,
-    secure: isProduction && !isLocalhost, // localhost -> false, vercel -> true
-    sameSite: isProduction && !isLocalhost ? "none" : "lax",
+    secure: false,
+    sameSite: "lax",
     path: "/",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 };
 
@@ -37,7 +60,9 @@ export const signUp = async (req, res) => {
 
   try {
     const normalizedEmail = email.toLowerCase().trim();
-    const existingUser = await userCollection.findOne({ email: normalizedEmail });
+    const existingUser = await userCollection.findOne({
+      email: normalizedEmail,
+    });
 
     if (existingUser) {
       return res.status(409).json(errorResponse("Email already registered"));
@@ -71,10 +96,14 @@ export const login = async (req, res) => {
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    const existingUser = await userCollection.findOne({ email: normalizedEmail });
+    const existingUser = await userCollection.findOne({
+      email: normalizedEmail,
+    });
 
     if (!existingUser) {
-      return res.status(404).json(errorResponse("Email or password is incorrect"));
+      return res
+        .status(404)
+        .json(errorResponse("Email or password is incorrect"));
     }
 
     const passwordMatch = await bcrypt.compare(password, existingUser.password);
@@ -131,6 +160,8 @@ export const check = async (req, res) => {
     );
   } catch (err) {
     console.error("check error:", err);
-    return res.status(500).json(errorResponse("Server error during auth check"));
+    return res
+      .status(500)
+      .json(errorResponse("Server error during auth check"));
   }
 };
