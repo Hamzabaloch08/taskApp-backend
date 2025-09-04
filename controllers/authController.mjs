@@ -19,17 +19,18 @@ const getCookieOptions = (req) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
   }
-
-  return {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    path: "/",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  };
+  if (!isLocal) {
+    return {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+  }
 };
 
-// 📝 Signup
+// Signup
 export const signUp = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
@@ -66,7 +67,7 @@ export const signUp = async (req, res) => {
   }
 };
 
-// 🔑 Login
+//  Login
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
