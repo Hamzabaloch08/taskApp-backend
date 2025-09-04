@@ -10,6 +10,8 @@ const userCollection = client.db("taskDB").collection("users");
 const getCookieOptions = (req) => {
   const isLocal = req.hostname === "localhost" || req.hostname === "127.0.0.1";
 
+  console.log(isLocal);
+
   if (isLocal) {
     return {
       httpOnly: true,
