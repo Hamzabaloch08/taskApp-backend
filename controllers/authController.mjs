@@ -1,4 +1,4 @@
-// controllers/authController.mjs
+
 import { successResponse, errorResponse } from "../utils/responses.mjs";
 import { client } from "../config/db.mjs";
 import validator from "validator";
