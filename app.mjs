@@ -11,23 +11,26 @@ import { errorResponse } from "./utils/responses.mjs";
 dotenv.config();
 const app = express();
 
-// Allowed origins
+// ✅ Allowed origins (localhost + all vercel.app subdomains)
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://fullstack-task-app-three.vercel.app",
+  /\.vercel\.app$/ // allow all vercel frontend subdomains
 ];
 
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS Middleware
+// ✅ CORS Middleware
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin like Postman
-      if (!origin) return callback(null, true);
-      if (!allowedOrigins.includes(origin)) {
+      if (!origin) return callback(null, true); // e.g. Postman
+      if (
+        !allowedOrigins.some((o) =>
+          o instanceof RegExp ? o.test(origin) : o === origin
+        )
+      ) {
         return callback(new Error("CORS policy: This origin is not allowed"), false);
       }
       return callback(null, true);
@@ -37,12 +40,13 @@ app.use(
   })
 );
 
-// Auth middleware for protected routes
+// ✅ Auth middleware (global)
 app.use((req, res, next) => {
   const publicPaths = [
     "/api/v1/auth/signup",
     "/api/v1/auth/login",
     "/api/v1/auth/logout",
+    "/api/v1/auth/check", // 👈 check route public banaya
   ];
 
   if (publicPaths.includes(req.path)) return next();
@@ -74,10 +78,12 @@ app.use((err, req, res, next) => {
   res.status(500).json(errorResponse("Internal server error"));
 });
 
-// Start server
+// ✅ Start server (needed for local + vercel)
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
 export default app;
