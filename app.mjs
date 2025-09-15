@@ -25,7 +25,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // e.g. Postman
+      if (!origin) return callback(null, true);
       if (
         !allowedOrigins.some((o) =>
           o instanceof RegExp ? o.test(origin) : o === origin
@@ -46,7 +46,7 @@ app.use((req, res, next) => {
     "/api/v1/auth/signup",
     "/api/v1/auth/login",
     "/api/v1/auth/logout",
-    "/api/v1/auth/check", // 👈 check route public banaya
+    "/api/v1/auth/check",
   ];
 
   if (publicPaths.includes(req.path)) return next();
