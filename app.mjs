@@ -9,7 +9,6 @@ import { errorResponse } from "./utils/responses.mjs";
 dotenv.config();
 const app = express();
 
-// ✅ Allowed frontend domains
 const allowedOrigins = [
   "http://localhost:5173",
   "https://fullstack-task-app-three.vercel.app"
@@ -18,7 +17,6 @@ const allowedOrigins = [
 // Middleware
 app.use(express.json());
 
-// ✅ CORS Middleware (simple, token in header)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
@@ -29,7 +27,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Auth middleware (global)
 app.use((req, res, next) => {
   const publicPaths = [
     "/api/v1/auth/signup",
