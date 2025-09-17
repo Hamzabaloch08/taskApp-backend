@@ -17,7 +17,6 @@ const allowedOrigins = [
 // Middleware
 app.use(express.json());
 
-// ✅ CORS Middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
@@ -26,37 +25,11 @@ app.use((req, res, next) => {
       "Access-Control-Allow-Methods",
       "GET,POST,PUT,DELETE,OPTIONS"
     );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type,Authorization"
-    );
-    // Agar credentials use karna ho
-    // res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
   }
   next();
 });
 
-app.options("*", (req, res) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET,POST,PUT,DELETE,OPTIONS"
-    );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type,Authorization"
-    );
-    // Agar credentials use karna ho
-    // res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.status(204).end(); // No content
-  } else {
-    res.status(403).end();
-  }
-});
-
-// ✅ Auth middleware (protected routes)
 app.use((req, res, next) => {
   const publicPaths = [
     "/api/v1/auth/signup",
