@@ -36,7 +36,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Handle preflight OPTIONS requests
 app.options("*", (req, res) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
