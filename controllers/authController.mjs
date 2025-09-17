@@ -19,7 +19,9 @@ export const signUp = async (req, res) => {
 
   try {
     const normalizedEmail = email.toLowerCase().trim();
-    const existingUser = await userCollection.findOne({ email: normalizedEmail });
+    const existingUser = await userCollection.findOne({
+      email: normalizedEmail,
+    });
 
     if (existingUser) {
       return res.status(409).json(errorResponse("Email already registered"));
@@ -35,7 +37,8 @@ export const signUp = async (req, res) => {
       createdOn: new Date(),
     });
 
-    return res.status(201).json(successResponse("User created"));
+    const newUser = await userCollection.findOne({ email: normalizedEmail });
+    return res.status(201).json(successResponse("User created", { newUser }));
   } catch (err) {
     console.error("signUp error:", err);
     return res.status(500).json(errorResponse("Server error"));
@@ -52,10 +55,14 @@ export const login = async (req, res) => {
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    const existingUser = await userCollection.findOne({ email: normalizedEmail });
+    const existingUser = await userCollection.findOne({
+      email: normalizedEmail,
+    });
 
     if (!existingUser) {
-      return res.status(404).json(errorResponse("Email or password is incorrect"));
+      return res
+        .status(404)
+        .json(errorResponse("Email or password is incorrect"));
     }
 
     const passwordMatch = await bcrypt.compare(password, existingUser.password);
@@ -95,7 +102,9 @@ export const check = async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.SECRET);
 
-    return res.status(200).json(successResponse("Authenticated", { user: decoded }));
+    return res
+      .status(200)
+      .json(successResponse("Authenticated", { user: decoded }));
   } catch (err) {
     console.error("check error:", err);
     return res.status(401).json(errorResponse("Invalid or expired token"));
