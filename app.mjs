@@ -68,7 +68,6 @@ app.use((err, req, res, next) => {
   res.status(500).json(errorResponse("Internal server error"));
 });
 
-// ✅ Start server
 const PORT = process.env.PORT || 4000;
 if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => {
