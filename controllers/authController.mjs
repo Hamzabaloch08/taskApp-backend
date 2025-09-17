@@ -19,9 +19,7 @@ export const signUp = async (req, res) => {
 
   try {
     const normalizedEmail = email.toLowerCase().trim();
-    const existingUser = await userCollection.findOne({
-      email: normalizedEmail,
-    });
+    const existingUser = await userCollection.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return res.status(409).json(errorResponse("Email already registered"));
@@ -29,15 +27,13 @@ export const signUp = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const insertResponse = await userCollection.insertOne({
+    await userCollection.insertOne({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: normalizedEmail,
       password: hashedPassword,
       createdOn: new Date(),
     });
-
-    console.log("User created:", insertResponse.insertedId);
 
     return res.status(201).json(successResponse("User created"));
   } catch (err) {
@@ -56,14 +52,10 @@ export const login = async (req, res) => {
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    const existingUser = await userCollection.findOne({
-      email: normalizedEmail,
-    });
+    const existingUser = await userCollection.findOne({ email: normalizedEmail });
 
     if (!existingUser) {
-      return res
-        .status(404)
-        .json(errorResponse("Email or password is incorrect"));
+      return res.status(404).json(errorResponse("Email or password is incorrect"));
     }
 
     const passwordMatch = await bcrypt.compare(password, existingUser.password);
@@ -77,61 +69,33 @@ export const login = async (req, res) => {
         firstName: existingUser.firstName,
         lastName: existingUser.lastName,
         email: existingUser.email,
-        isAdmin: existingUser.isAdmin,
+        isAdmin: existingUser.isAdmin || false,
       },
       process.env.SECRET,
       { expiresIn: "62h" }
     );
 
-    const isProduction =
-      process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      maxAge: 62 * 60 * 60 * 1000, // 62 hours
-      path: "/",
-    });
-
-    return res.status(200).json(successResponse("Login successful"));
+    return res.status(200).json(
+      successResponse("Login successful", {
+        token,
+      })
+    );
   } catch (err) {
     console.error("login error:", err);
     res.status(500).json(errorResponse("Server error"));
   }
 };
 
-export const logout = async (req, res) => {
-  try {
-    const isProduction =
-      process.env.NODE_ENV === "production" && process.env.VERCEL === "1";
-
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: "/",
-    });
-
-    return res.status(200).json(successResponse("Logged out successfully"));
-  } catch (err) {
-    console.error("logout error:", err);
-    return res.status(500).json(errorResponse("Server error during logout"));
-  }
-};
-
 export const check = async (req, res) => {
   try {
-    const token = req.cookies.token;
+    const token = req.headers["authorization"]?.split(" ")[1]; // Expect "Bearer token"
     if (!token) {
       return res.status(401).json(errorResponse("No token provided"));
     }
 
     const decoded = jwt.verify(token, process.env.SECRET);
 
-    return res
-      .status(200)
-      .json(successResponse("Authenticated", { user: decoded }));
+    return res.status(200).json(successResponse("Authenticated", { user: decoded }));
   } catch (err) {
     console.error("check error:", err);
     return res.status(401).json(errorResponse("Invalid or expired token"));
