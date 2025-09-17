@@ -1,6 +1,5 @@
 import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
 import jwt from "jsonwebtoken";
 
 import { authRoutes } from "./routes/authRoutes.mjs";
@@ -10,27 +9,25 @@ import { errorResponse } from "./utils/responses.mjs";
 dotenv.config();
 const app = express();
 
+// ✅ Allowed frontend domains
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://fullstack-task-app-three.vercel.app" // frontend deployed domain
+  "https://fullstack-task-app-three.vercel.app"
 ];
 
 // Middleware
 app.use(express.json());
 
-// ✅ CORS Middleware
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allow non-browser requests (e.g., Postman)
-      if (!allowedOrigins.includes(origin)) {
-        return callback(new Error("CORS policy: This origin is not allowed"), false);
-      }
-      return callback(null, true);
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  })
-);
+// ✅ CORS Middleware (simple, token in header)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  }
+  next();
+});
 
 // ✅ Auth middleware (global)
 app.use((req, res, next) => {
@@ -71,6 +68,7 @@ app.use((err, req, res, next) => {
   res.status(500).json(errorResponse("Internal server error"));
 });
 
+// ✅ Start server
 const PORT = process.env.PORT || 4000;
 if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => {
