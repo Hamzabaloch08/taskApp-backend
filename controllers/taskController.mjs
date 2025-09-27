@@ -9,9 +9,13 @@ export const createTask = async (req, res) => {
   const { title, description } = req.body;
 
   if (!title?.trim() || !description?.trim()) {
-    return res.status(400).json(
-      errorResponse("Title and description are required and must be non-empty")
-    );
+    return res
+      .status(400)
+      .json(
+        errorResponse(
+          "Title and description are required and must be non-empty"
+        )
+      );
   }
 
   try {
@@ -25,10 +29,16 @@ export const createTask = async (req, res) => {
     };
 
     const result = await taskCollection.insertOne(newTask);
-    res.status(201).json(successResponse("Task created successfully", result));
+
+    const createdTask = { ...newTask, _id: result.insertedId };
+    res
+      .status(201)
+      .json(successResponse("Task created successfully", createdTask));
   } catch (err) {
     console.error("createTask error:", err);
-    res.status(500).json(errorResponse("Something went wrong while creating task"));
+    res
+      .status(500)
+      .json(errorResponse("Something went wrong while creating task"));
   }
 };
 
@@ -53,11 +63,16 @@ export const updateTask = async (req, res) => {
   const { id } = req.params;
   const { title, description } = req.body;
 
-  if (!ObjectId.isValid(id)) return res.status(400).json(errorResponse("Invalid ID"));
+  if (!ObjectId.isValid(id))
+    return res.status(400).json(errorResponse("Invalid ID"));
   if (!title?.trim() || !description?.trim()) {
-    return res.status(400).json(
-      errorResponse("Title and description are required and must be non-empty")
-    );
+    return res
+      .status(400)
+      .json(
+        errorResponse(
+          "Title and description are required and must be non-empty"
+        )
+      );
   }
 
   try {
@@ -80,7 +95,8 @@ export const updateTask = async (req, res) => {
 // DELETE TASK
 export const deleteTask = async (req, res) => {
   const { id } = req.params;
-  if (!ObjectId.isValid(id)) return res.status(400).json(errorResponse("Invalid ID"));
+  if (!ObjectId.isValid(id))
+    return res.status(400).json(errorResponse("Invalid ID"));
 
   try {
     const deleteResult = await taskCollection.deleteOne({
@@ -102,7 +118,9 @@ export const deleteTask = async (req, res) => {
 // DELETE ALL TASKS
 export const deleteAllTasks = async (req, res) => {
   try {
-    const deleteResult = await taskCollection.deleteMany({ email: req.user.email });
+    const deleteResult = await taskCollection.deleteMany({
+      email: req.user.email,
+    });
     res.status(200).json(
       successResponse("All tasks deleted successfully", {
         deletedCount: deleteResult.deletedCount,
