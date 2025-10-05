@@ -44,9 +44,21 @@ export const createTask = async (req, res) => {
 
 // GET TASKS
 export const getTasks = async (req, res) => {
+  const { important, completed } = req.query;
+
+  const filter = { email: req.user.email };
+
+  if (important !== undefined) {
+    filter.important = important === "true";
+  }
+
+  if (completed !== undefined) {
+    filter.completed = completed === "true";
+  }
+
   try {
     const tasks = await taskCollection
-      .find({ email: req.user.email })
+      .find(filter)
       .sort({ _id: -1 })
       .limit(100)
       .toArray();
@@ -61,24 +73,39 @@ export const getTasks = async (req, res) => {
 // UPDATE TASK
 export const updateTask = async (req, res) => {
   const { id } = req.params;
-  const { title, description } = req.body;
+  const { title, description, completed, important } = req.body;
 
   if (!ObjectId.isValid(id))
     return res.status(400).json(errorResponse("Invalid ID"));
-  if (!title?.trim() || !description?.trim()) {
-    return res
-      .status(400)
-      .json(
-        errorResponse(
-          "Title and description are required and must be non-empty"
-        )
-      );
+
+  const updates = {};
+
+  if (title !== undefined) {
+    if (!title.trim()) {
+      return res.status(400).json(errorResponse("Title cannot be empty"));
+    }
+    updates.title = title.trim();
+  }
+
+  if (description !== undefined) {
+    if (!description.trim()) {
+      return res.status(400).json(errorResponse("Description cannot be empty"));
+    }
+    updates.description = description.trim();
+  }
+
+  if (completed !== undefined) {
+    updates.completed = completed === "true" || completed === true;
+  }
+
+  if (important !== undefined) {
+    updates.important = important === true || important === true;
   }
 
   try {
     const updateResult = await taskCollection.updateOne(
       { _id: new ObjectId(id), email: req.user.email },
-      { $set: { title: title.trim(), description: description.trim() } }
+      { $set: updates }
     );
 
     if (updateResult.matchedCount === 0) {
