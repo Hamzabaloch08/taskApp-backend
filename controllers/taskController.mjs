@@ -72,44 +72,53 @@ export const getTasks = async (req, res) => {
 
 // UPDATE TASK
 export const updateTask = async (req, res) => {
-  const { id } = req.params;
-  const { title, description, completed, important } = req.body;
-
-  if (!ObjectId.isValid(id))
-    return res.status(400).json(errorResponse("Invalid ID"));
-
-  const updates = {};
-
-  if (title !== undefined) {
-    if (!title.trim()) {
-      return res.status(400).json(errorResponse("Title cannot be empty"));
-    }
-    updates.title = title.trim();
-  }
-
-  if (description !== undefined) {
-    if (!description.trim()) {
-      return res.status(400).json(errorResponse("Description cannot be empty"));
-    }
-    updates.description = description.trim();
-  }
-
-  if (completed !== undefined) {
-    updates.completed = completed === "true" || completed === true;
-  }
-
-  if (important !== undefined) {
-    updates.important = important === "true" || important === true;
-  }
-
   try {
+    const { id } = req.params;
+    const { title, description, completed, important } = req.body;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json(errorResponse("Invalid ID"));
+    }
+
+    const updates = {};
+
+    if (title !== undefined) {
+      const trimmed = title.trim();
+      if (!trimmed)
+        return res.status(400).json(errorResponse("Title cannot be empty"));
+      updates.title = trimmed;
+    }
+
+    if (description !== undefined) {
+      const trimmed = description.trim();
+      if (!trimmed)
+        return res
+          .status(400)
+          .json(errorResponse("Description cannot be empty"));
+      updates.description = trimmed;
+    }
+
+    if (completed !== undefined) {
+      updates.completed = completed === true || completed === "true";
+    }
+
+    if (important !== undefined) {
+      updates.important = important === true || important === "true";
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json(errorResponse("No valid fields to update"));
+    }
+
     const updatedTask = await taskCollection.findOneAndUpdate(
       { _id: new ObjectId(id), email: req.user.email },
       { $set: updates },
-      { returnDocument: "after" } // updated task return
+      { returnDocument: "after" } // return updated document
     );
 
-
+    if (!updatedTask.value) {
+      return res.status(404).json(errorResponse("Task not found"));
+    }
 
     res
       .status(200)
@@ -119,7 +128,6 @@ export const updateTask = async (req, res) => {
     res.status(500).json(errorResponse("Server error"));
   }
 };
-
 
 // DELETE TASK
 export const deleteTask = async (req, res) => {
