@@ -99,11 +99,11 @@ export const updateTask = async (req, res) => {
     }
 
     if (completed !== undefined) {
-      updates.completed = completed === true || completed === "true";
+      updates.completed = Boolean(completed);
     }
 
     if (important !== undefined) {
-      updates.important = important === true || important === "true";
+      updates.important = Boolean(important);
     }
 
     if (Object.keys(updates).length === 0) {
