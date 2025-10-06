@@ -109,9 +109,7 @@ export const updateTask = async (req, res) => {
       { returnDocument: "after" } // updated task return
     );
 
-    if (!updatedTask.value) {
-      return res.status(404).json(errorResponse("Task not found"));
-    }
+
 
     res
       .status(200)
