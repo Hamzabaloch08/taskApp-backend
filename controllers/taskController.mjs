@@ -99,25 +99,29 @@ export const updateTask = async (req, res) => {
   }
 
   if (important !== undefined) {
-    updates.important = important === true || important === true;
+    updates.important = important === "true" || important === true;
   }
 
   try {
-    const updateResult = await taskCollection.updateOne(
+    const updatedTask = await taskCollection.findOneAndUpdate(
       { _id: new ObjectId(id), email: req.user.email },
-      { $set: updates }
+      { $set: updates },
+      { returnDocument: "after" } // updated task return
     );
 
-    if (updateResult.matchedCount === 0) {
+    if (!updatedTask.value) {
       return res.status(404).json(errorResponse("Task not found"));
     }
 
-    res.status(200).json(successResponse("Task updated successfully"));
+    res
+      .status(200)
+      .json(successResponse("Task updated successfully", updatedTask.value));
   } catch (err) {
     console.error("updateTask error:", err);
     res.status(500).json(errorResponse("Server error"));
   }
 };
+
 
 // DELETE TASK
 export const deleteTask = async (req, res) => {
