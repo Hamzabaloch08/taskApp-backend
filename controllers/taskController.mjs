@@ -104,9 +104,9 @@ export const updateTask = async (req, res) => {
 
   try {
     const updatedTask = await taskCollection.findOneAndUpdate(
-      { _id: new ObjectId(id), email: req.user.email },
+      { _id: id, email: req.user.email },
       { $set: updates },
-      { returnDocument: "after" } // updated task return
+      { returnDocument: "after" }
     );
 
     if (!updatedTask.value) {
