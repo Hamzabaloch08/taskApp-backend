@@ -84,27 +84,19 @@ export const updateTask = async (req, res) => {
 
     if (title !== undefined) {
       const trimmed = title.trim();
-      if (!trimmed)
-        return res.status(400).json(errorResponse("Title cannot be empty"));
+      if (!trimmed) return res.status(400).json(errorResponse("Title cannot be empty"));
       updates.title = trimmed;
     }
 
     if (description !== undefined) {
       const trimmed = description.trim();
-      if (!trimmed)
-        return res
-          .status(400)
-          .json(errorResponse("Description cannot be empty"));
+      if (!trimmed) return res.status(400).json(errorResponse("Description cannot be empty"));
       updates.description = trimmed;
     }
 
-    if (completed !== undefined) {
-      updates.completed = Boolean(completed);
-    }
-
-    if (important !== undefined) {
-      updates.important = Boolean(important);
-    }
+    // ✅ Direct boolean handling
+    if (completed !== undefined) updates.completed = completed;
+    if (important !== undefined) updates.important = important;
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json(errorResponse("No valid fields to update"));
@@ -114,23 +106,23 @@ export const updateTask = async (req, res) => {
     console.log("User email:", req.user.email);
 
     const updatedTask = await taskCollection.findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      { _id: new ObjectId(id), email: req.user.email },
       { $set: updates },
       { returnDocument: "after" } // return updated document
     );
 
-    if (!updatedTask.value) {
+    if (!updatedTask) {
       return res.status(404).json(errorResponse("Task not found"));
     }
 
-    res
-      .status(200)
-      .json(successResponse("Task updated successfully", updatedTask.value));
+    // ✅ Use successResponse helper
+    res.status(200).json(successResponse("Task updated successfully", updatedTask));
   } catch (err) {
     console.error("updateTask error:", err);
     res.status(500).json(errorResponse("Server error"));
   }
 };
+
 
 // DELETE TASK
 export const deleteTask = async (req, res) => {
