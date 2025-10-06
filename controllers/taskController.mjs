@@ -110,8 +110,11 @@ export const updateTask = async (req, res) => {
       return res.status(400).json(errorResponse("No valid fields to update"));
     }
 
+    console.log("Updating task:", id);
+    console.log("User email:", req.user.email);
+
     const updatedTask = await taskCollection.findOneAndUpdate(
-      { _id: new ObjectId(id), email: req.user.email },
+      { _id: new ObjectId(id) },
       { $set: updates },
       { returnDocument: "after" } // return updated document
     );
