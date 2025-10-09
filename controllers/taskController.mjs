@@ -94,16 +94,12 @@ export const updateTask = async (req, res) => {
       updates.description = trimmed;
     }
 
-    // ✅ Direct boolean handling
     if (completed !== undefined) updates.completed = completed;
     if (important !== undefined) updates.important = important;
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json(errorResponse("No valid fields to update"));
     }
-
-    console.log("Updating task:", id);
-    console.log("User email:", req.user.email);
 
     const updatedTask = await taskCollection.findOneAndUpdate(
       { _id: new ObjectId(id), email: req.user.email },
@@ -115,14 +111,12 @@ export const updateTask = async (req, res) => {
       return res.status(404).json(errorResponse("Task not found"));
     }
 
-    // ✅ Use successResponse helper
     res.status(200).json(successResponse("Task updated successfully", updatedTask));
   } catch (err) {
     console.error("updateTask error:", err);
     res.status(500).json(errorResponse("Server error"));
   }
 };
-
 
 // DELETE TASK
 export const deleteTask = async (req, res) => {
