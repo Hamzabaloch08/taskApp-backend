@@ -56,6 +56,8 @@ export const getTasks = async (req, res) => {
     filter.completed = completed === "true";
   }
 
+  console.log("filter new", filter);
+
   try {
     const tasks = await taskCollection
       .find(filter)
@@ -84,13 +86,17 @@ export const updateTask = async (req, res) => {
 
     if (title !== undefined) {
       const trimmed = title.trim();
-      if (!trimmed) return res.status(400).json(errorResponse("Title cannot be empty"));
+      if (!trimmed)
+        return res.status(400).json(errorResponse("Title cannot be empty"));
       updates.title = trimmed;
     }
 
     if (description !== undefined) {
       const trimmed = description.trim();
-      if (!trimmed) return res.status(400).json(errorResponse("Description cannot be empty"));
+      if (!trimmed)
+        return res
+          .status(400)
+          .json(errorResponse("Description cannot be empty"));
       updates.description = trimmed;
     }
 
@@ -111,7 +117,9 @@ export const updateTask = async (req, res) => {
       return res.status(404).json(errorResponse("Task not found"));
     }
 
-    res.status(200).json(successResponse("Task updated successfully", updatedTask));
+    res
+      .status(200)
+      .json(successResponse("Task updated successfully", updatedTask));
   } catch (err) {
     console.error("updateTask error:", err);
     res.status(500).json(errorResponse("Server error"));
