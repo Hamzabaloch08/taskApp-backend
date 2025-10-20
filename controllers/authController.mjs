@@ -110,3 +110,4 @@ export const check = async (req, res) => {
     return res.status(401).json(errorResponse("Invalid or expired token"));
   }
 };
+
