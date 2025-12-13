@@ -74,9 +74,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       {
         isAdmin: existingUser.isAdmin || false,
-        email: existingUser.email,
-        firstName: existingUser.firstName,
-        lastName: existingUser.lastName,
+        userId: existingUser._id,
       },
       process.env.SECRET,
       { expiresIn: "62h" }
@@ -96,6 +94,7 @@ export const login = async (req, res) => {
 export const check = async (req, res) => {
   try {
     const token = req.headers["authorization"]?.split(" ")[1]; // Expect "Bearer token"
+    console.log(token);
     if (!token) {
       return res.status(401).json(errorResponse("No token provided"));
     }
@@ -110,4 +109,3 @@ export const check = async (req, res) => {
     return res.status(401).json(errorResponse("Invalid or expired token"));
   }
 };
-
