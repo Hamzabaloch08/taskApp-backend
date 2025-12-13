@@ -22,7 +22,7 @@ export const createTask = async (req, res) => {
     const newTask = {
       title: title.trim(),
       description: description.trim(),
-      email: req.user.email, // JWT from Authorization header
+      userId: req.user.userId, // JWT from Authorization header
       completed: false,
       important: false,
       createdOn: new Date(),
