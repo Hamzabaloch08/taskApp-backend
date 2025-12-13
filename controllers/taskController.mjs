@@ -46,7 +46,7 @@ export const createTask = async (req, res) => {
 export const getTasks = async (req, res) => {
   const { important, completed } = req.query;
 
-  const filter = { email: req.user.email };
+  const filter = { userId: req.user.userId };
 
   if (important !== undefined) {
     filter.important = important === "true";
